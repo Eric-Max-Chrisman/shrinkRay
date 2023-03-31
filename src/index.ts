@@ -7,10 +7,11 @@ import connectSqlite3 from 'connect-sqlite3';
 import {
   registerUser,
   logIn,
-  getUserProfileData,
+  // getUserProfileData,
   getAllUserProfiles,
-  resetProfileViews,
-  updateUserEmail,
+  // resetProfileViews,
+  updateUserUsername,
+  getUserByUsername,
 } from './controllers/UserController';
 
 const app: Express = express();
@@ -33,11 +34,12 @@ app.use(express.json());
 
 app.post('/api/users', registerUser); // Create an account
 app.post('/api/login', logIn); // Log in to an account
-app.post('/api/users/profileViews/reset', resetProfileViews); // Log in to an account
+// app.post('/api/users/profileViews/reset', resetProfileViews); // Log in to an account
 
-app.get('/api/users', getAllUserProfiles);
-app.get('/api/users/:targetUserId', getUserProfileData);
-app.post('/api/users/:targetUserId/email', updateUserEmail);
+app.get('/api/allusers', getAllUserProfiles);
+app.post('/api/:username/user', getUserByUsername);
+// app.get('/api/users/:targetUserId', getUserProfileData);
+app.post('/api/users/:targetUserId/username', updateUserUsername);
 
 app.listen(PORT, () => {
   console.log(`Listening at http://localhost:${PORT}`);

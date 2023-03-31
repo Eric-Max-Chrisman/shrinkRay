@@ -3,23 +3,24 @@ import { User } from '../entities/User';
 
 const userRepository = AppDataSource.getRepository(User);
 
-async function addUser(email: string, passwordHash: string): Promise<User> {
-  // Create the new user object
+async function getUserWithUsername(username: string): Promise<User | null> {
+  // TODO: Get the user by where the username matches the parameter
+  // This should also retrieve the `links` relation
+  return await userRepository.findOne({ where: { username } });
+}
+
+async function addNewUser(username: string, passwordHash: string): Promise<User | null> {
+  // TODO: Add the new user to the database
   let newUser = new User();
-  newUser.email = email;
+  newUser.username = username;
   newUser.passwordHash = passwordHash;
-
-  // Then save it to the database
-  // NOTES: We reassign to `newUser` so we can access
-  // NOTES: the fields the database autogenerates (the id & default columns)
   newUser = await userRepository.save(newUser);
-
   return newUser;
 }
 
-async function getUserByEmail(email: string): Promise<User | null> {
-  return await userRepository.findOne({ where: { email } });
-}
+// async function getUserByEmail(email: string): Promise<User | null> {
+// return await userRepository.findOne({ where: { email } });
+// }
 
 async function allUserData(): Promise<User[]> {
   return await userRepository.find();
@@ -39,7 +40,7 @@ async function getUsersByViews(minViews: number): Promise<User[]> {
 
   return users;
 }
-
+/*
 async function incrementProfileViews(userData: User): Promise<User> {
   const updatedUser = userData;
   updatedUser.profileViews += 1;
@@ -62,23 +63,25 @@ async function resetAllProfileViews(): Promise<void> {
     .where('verifiedEmail <> true')
     .execute();
 }
-
-async function updateEmailAddress(userId: string, newEmail: string): Promise<void> {
+*/
+async function updateUsername(userId: string, newUsername: string): Promise<void> {
   await userRepository
     .createQueryBuilder()
     .update(User)
-    .set({ email: newEmail })
+    .set({ username: newUsername })
     .where({ userId })
     .execute();
 }
 
 export {
-  addUser,
-  getUserByEmail,
+  // addUser,
+  // getUserByEmail,
   getUserById,
   getUsersByViews,
-  incrementProfileViews,
+  // incrementProfileViews,
   allUserData,
-  resetAllProfileViews,
-  updateEmailAddress,
+  // resetAllProfileViews,
+  updateUsername,
+  getUserWithUsername,
+  addNewUser,
 };

@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Relation } from 'typeorm';
-import { Review } from './Review';
+import { Link } from './Link';
 
 @Entity()
 export class User {
@@ -7,17 +7,17 @@ export class User {
   userId: string;
 
   @Column({ unique: true })
-  email: string;
+  username: string;
 
   @Column({ unique: true })
   passwordHash: string;
 
   @Column({ default: false })
-  verifiedEmail: boolean;
+  isPro: boolean;
 
-  @Column({ default: 0 })
-  profileViews: number;
+  @Column({ default: false })
+  isAdmin: boolean;
 
-  @OneToMany(() => Review, (review) => review.user, { cascade: ['insert', 'update'] })
-  reviews: Relation<Review>[];
+  @OneToMany(() => Link, (link) => link.user, { cascade: ['insert', 'update'] })
+  links: Relation<Link>[];
 }

@@ -7,7 +7,9 @@ declare module 'express-session' {
     // NOTES: Our example app's custom session properties:
     authenticatedUser: {
       userId: string;
-      email: string;
+      isPro: boolean;
+      isAdmin: boolean;
+      username: string;
     };
     isLoggedIn: boolean;
     logInAttempts: number;

@@ -1,8 +1,12 @@
 type AuthRequest = {
-  email: string;
+  username: string;
   password: string;
 };
 
 type UserIdParam = {
   targetUserId: string;
+};
+
+type UserUserNameParam = {
+  targetUserUserName: string;
 };

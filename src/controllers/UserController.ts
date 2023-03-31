@@ -2,29 +2,28 @@ import { Request, Response } from 'express';
 import argon2 from 'argon2';
 import { addMinutes, isBefore, parseISO, formatDistanceToNow } from 'date-fns';
 import {
-  addUser,
-  getUserByEmail,
+  addNewUser,
+  // getUserByEmail,
   getUserById,
-  incrementProfileViews,
+  // incrementProfileViews,
   allUserData,
-  resetAllProfileViews,
-  updateEmailAddress,
+  // resetAllProfileViews,
+  updateUsername,
+  getUserWithUsername,
 } from '../models/UserModel';
 import { parseDatabaseError } from '../utils/db-utils';
 
-async function getAllUserProfiles(req: Request, res: Response): Promise<void> {
-  res.json(await allUserData());
-}
-
 async function registerUser(req: Request, res: Response): Promise<void> {
-  const { email, password } = req.body as AuthRequest;
-
-  // IMPORTANT: Hash the password
+  // TODO: Implement the registration code
+  // Make sure to check if the user with the given username exists before attempting to add the account
+  // Make sure to hash the password before adding it to the database
+  // Wrap the call to `addNewUser` in a try/catch like in the sample code
+  const { username, password } = req.body as AuthRequest;
   const passwordHash = await argon2.hash(password);
 
   try {
-    // IMPORTANT: Store the `passwordHash` and NOT the plaintext password
-    const newUser = await addUser(email, passwordHash);
+    // if username already exist, the addUser function will fail and it will be caught
+    const newUser = await addNewUser(username, passwordHash);
     console.log(newUser);
     res.sendStatus(201);
   } catch (err) {
@@ -32,6 +31,10 @@ async function registerUser(req: Request, res: Response): Promise<void> {
     const databaseErrorMessage = parseDatabaseError(err);
     res.status(500).json(databaseErrorMessage);
   }
+}
+
+async function getAllUserProfiles(req: Request, res: Response): Promise<void> {
+  res.json(await allUserData());
 }
 
 async function logIn(req: Request, res: Response): Promise<void> {
@@ -51,9 +54,9 @@ async function logIn(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const { email, password } = req.body as AuthRequest;
+  const { username, password } = req.body as AuthRequest;
 
-  const user = await getUserByEmail(email);
+  const user = await getUserWithUsername(username);
   if (!user) {
     res.sendStatus(404); // 404 Not Found - email doesn't exist
     return;
@@ -86,13 +89,16 @@ async function logIn(req: Request, res: Response): Promise<void> {
   // NOTES: Now we can add whatever data we want to the session
   req.session.authenticatedUser = {
     userId: user.userId,
-    email: user.email,
+    username: user.username,
+    isPro: user.isPro,
+    isAdmin: user.isAdmin,
   };
   req.session.isLoggedIn = true;
 
   res.sendStatus(200);
 }
 
+/*
 async function getUserProfileData(req: Request, res: Response): Promise<void> {
   const { targetUserId } = req.params as UserIdParam;
 
@@ -109,13 +115,32 @@ async function getUserProfileData(req: Request, res: Response): Promise<void> {
 
   res.json(user);
 }
+*/
 
+async function getUserByUsername(req: Request, res: Response): Promise<void> {
+  const { targetUserUserName } = req.params as UserUserNameParam;
+
+  // Get the user account
+  const user = await getUserWithUsername(targetUserUserName);
+
+  if (!user) {
+    res.sendStatus(404); // 404 Not Found
+    return;
+  }
+
+  // Now update their profile views
+  // user = await incrementProfileViews(user);
+
+  res.json(user);
+}
+/*
 async function resetProfileViews(req: Request, res: Response): Promise<void> {
   await resetAllProfileViews();
   res.sendStatus(200);
 }
+*/
 
-async function updateUserEmail(req: Request, res: Response): Promise<void> {
+async function updateUserUsername(req: Request, res: Response): Promise<void> {
   const { targetUserId } = req.params as UserIdParam;
 
   // NOTES: Access the data from `req.session`
@@ -128,7 +153,7 @@ async function updateUserEmail(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const { email } = req.body as { email: string };
+  const { username } = req.body as { username: string };
 
   // Get the user account
   const user = await getUserById(targetUserId);
@@ -140,7 +165,7 @@ async function updateUserEmail(req: Request, res: Response): Promise<void> {
 
   // Now update their email address
   try {
-    await updateEmailAddress(targetUserId, email);
+    await updateUsername(targetUserId, username);
   } catch (err) {
     // The email was taken so we need to send an error message
     console.error(err);
@@ -155,8 +180,9 @@ async function updateUserEmail(req: Request, res: Response): Promise<void> {
 export {
   registerUser,
   logIn,
-  getUserProfileData,
+  // getUserProfileData,
   getAllUserProfiles,
-  resetProfileViews,
-  updateUserEmail,
+  // resetProfileViews,
+  updateUserUsername,
+  getUserByUsername,
 };
