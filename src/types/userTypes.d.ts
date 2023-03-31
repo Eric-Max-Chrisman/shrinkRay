@@ -10,3 +10,7 @@ type UserIdParam = {
 type UserUserNameParam = {
   targetUserUserName: string;
 };
+
+type LinkParam = {
+  link: string;
+};

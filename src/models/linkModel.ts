@@ -3,10 +3,10 @@ import { AppDataSource } from '../dataSource';
 import { Link } from '../entities/Link';
 import { User } from '../entities/User';
 
-const userRepository = AppDataSource.getRepository(Link);
+const linkRepository = AppDataSource.getRepository(Link);
 
 async function getLinkById(linkId: string): Promise<Link | null> {
-  const link = await userRepository.findOne({ where: { linkId } });
+  const link = await linkRepository.findOne({ where: { linkId } });
   return link;
 }
 
@@ -29,4 +29,9 @@ async function createNewLink(originalUrl: string, linkId: string, creator: User)
   return newLink;
 }
 
-export { getLinkById, createLinkId, createNewLink };
+async function addLinkToDatabase(newLink: Link): Promise<Link | null> {
+  const tempLink = await linkRepository.save(newLink);
+  return tempLink;
+}
+
+export { getLinkById, createLinkId, createNewLink, addLinkToDatabase };
