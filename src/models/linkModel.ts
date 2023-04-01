@@ -34,4 +34,60 @@ async function addLinkToDatabase(newLink: Link): Promise<Link | null> {
   return tempLink;
 }
 
-export { getLinkById, createLinkId, createNewLink, addLinkToDatabase };
+async function updateLinkVisits(link: Link): Promise<Link> {
+  // Increment the link's number of hits property
+  const tempLink: Link = link;
+  tempLink.numHits += 1;
+
+  // Create a new date object and assign it to the link's `lastAccessedOn` property.
+  const now = new Date();
+  tempLink.lastAccessedOn = now;
+  // Update the link's numHits and lastAccessedOn in the database
+  await linkRepository
+    .createQueryBuilder()
+    .update(Link)
+    .set({ numHits: tempLink.numHits, lastAccessedOn: tempLink.lastAccessedOn })
+    .where({ linkId: tempLink.linkId })
+    .execute();
+
+  // return the updated link
+  return tempLink;
+}
+
+async function getLinkByLinkId(linkId: string): Promise<Link | null> {
+  return linkRepository.findOne({ where: { linkId } });
+}
+
+async function getLinksByUserId(userId: string): Promise<Link[]> {
+  const links = await linkRepository
+    .createQueryBuilder('link')
+    .where({ user: { userId } }) // NOTES: This is how you do nested WHERE clauses
+    .leftJoin('link.user', 'user')
+    .select(['link.linkId', 'link.originalUrl', 'user'])
+    .getMany();
+
+  return links;
+}
+
+async function getLinksByUserIdForOwnAccount(userId: string): Promise<Link[]> {
+  // TODO: This function is pretty much the same but it should return the fields
+  const links = await linkRepository
+    .createQueryBuilder('link')
+    .where({ user: { userId } }) // NOTES: This is how you do nested WHERE clauses
+    .leftJoin('link.user', 'user')
+    .select(['link.linkId', 'link.originalUrl', 'link.numHits', 'link.lastAccessedOn', 'user'])
+    .getMany();
+
+  return links;
+}
+
+export {
+  getLinkById,
+  createLinkId,
+  createNewLink,
+  addLinkToDatabase,
+  updateLinkVisits,
+  getLinkByLinkId,
+  getLinksByUserId,
+  getLinksByUserIdForOwnAccount,
+};

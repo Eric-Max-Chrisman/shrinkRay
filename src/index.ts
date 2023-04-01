@@ -7,12 +7,12 @@ import connectSqlite3 from 'connect-sqlite3';
 import {
   registerUser,
   logIn,
-  // getUserProfileData,
   getAllUserProfiles,
-  // resetProfileViews,
   updateUserUsername,
   getUserByUsername,
 } from './controllers/UserController';
+
+import { shortenUrl, getOriginalUrl, getAllUsersLinks } from './controllers/LinkController';
 
 const app: Express = express();
 const { PORT, COOKIE_SECRET } = process.env;
@@ -32,9 +32,12 @@ app.use(
 
 app.use(express.json());
 
+app.post('api/newLink', shortenUrl);
+app.get('api/link/:link', getOriginalUrl);
+app.get('api/:username/getAllLinks', getAllUsersLinks);
+
 app.post('/api/users', registerUser); // Create an account
 app.post('/api/login', logIn); // Log in to an account
-// app.post('/api/users/profileViews/reset', resetProfileViews); // Log in to an account
 
 app.get('/api/allusers', getAllUserProfiles);
 app.post('/api/:username/user', getUserByUsername);

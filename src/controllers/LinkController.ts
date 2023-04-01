@@ -1,7 +1,16 @@
 import { Request, Response } from 'express';
-import { getUserById } from '../models/UserModel';
+import { getUserById, getUserWithUsername } from '../models/UserModel';
 import { User } from '../entities/User';
-import { createNewLink, createLinkId, addLinkToDatabase } from '../models/linkModel';
+import { Link } from '../entities/Link';
+import {
+  createNewLink,
+  createLinkId,
+  addLinkToDatabase,
+  updateLinkVisits,
+  getLinkByLinkId,
+  getLinksByUserId,
+  getLinksByUserIdForOwnAccount,
+} from '../models/linkModel';
 import { parseDatabaseError } from '../utils/db-utils';
 
 async function shortenUrl(req: Request, res: Response): Promise<void> {
@@ -11,8 +20,7 @@ async function shortenUrl(req: Request, res: Response): Promise<void> {
   const { isLoggedIn, authenticatedUser } = req.session;
   const { userId } = authenticatedUser;
   if (!isLoggedIn) {
-    // check to see user is logined in
-    res.sendStatus(403); // 403 Forbidden
+    res.sendStatus(401);
   }
 
   // Get the userId from `req.session`
@@ -44,6 +52,7 @@ async function shortenUrl(req: Request, res: Response): Promise<void> {
     const linkId = await createLinkId(link, userId);
     const newLink = await createNewLink(link, linkId, tempUser);
     addLinkToDatabase(newLink);
+    console.log(res.json(newLink));
   } catch (err) {
     console.error(err);
     const databaseErrorMessage = parseDatabaseError(err);
@@ -54,4 +63,48 @@ async function shortenUrl(req: Request, res: Response): Promise<void> {
   res.sendStatus(201);
 }
 
-export { shortenUrl };
+async function getOriginalUrl(req: Request, res: Response): Promise<void> {
+  // Retrieve the link data using the targetLinkId from the path parameter
+  const { link } = req.params as LinkParam;
+  const refLink: Link = await getLinkByLinkId(link);
+
+  // Check if you got back `null`
+  if (!refLink) {
+    // send the appropriate response
+    res.sendStatus(404);
+    return;
+  }
+
+  // Call the appropriate function to increment the number of hits and the last accessed date
+  const printLink: Link = await updateLinkVisits(refLink);
+  console.log(res.json(printLink));
+
+  // Redirect the client to the original URL
+  const redirectLink: string = refLink.originalUrl;
+  res.sendStatus(201);
+  window.location.replace(redirectLink); // from w3schools, shold redirect like <a href= "n">
+}
+
+async function getAllUsersLinks(req: Request, res: Response): Promise<void> {
+  const username = req.params as UserUserNameParam;
+  const refUser: User = await getUserWithUsername(username.targetUserUserName);
+  if (!refUser) {
+    res.sendStatus(404);
+    return;
+  }
+
+  const { isLoggedIn, authenticatedUser } = req.session;
+
+  if (authenticatedUser.isAdmin || (isLoggedIn && authenticatedUser.userId === refUser.userId)) {
+    // get everything
+    const links: Link[] = await getLinksByUserIdForOwnAccount(refUser.userId);
+    console.log(res.json(links));
+  } else {
+    // get all links and some user info
+    const links: Link[] = await getLinksByUserId(refUser.userId);
+    console.log(res.json(links));
+  }
+
+  res.sendStatus(201);
+}
+export { shortenUrl, getOriginalUrl, getAllUsersLinks };
