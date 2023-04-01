@@ -29,6 +29,15 @@ async function shortenUrl(req: Request, res: Response): Promise<void> {
   // check how many links they've already generated
   // if they have generated 5 links
   // send the appropriate response
+  if (tempUser.isAdmin || tempUser.isPro) {
+    const numLinks: number = tempUser.links.length;
+    if (numLinks > 5) {
+      res.sendStatus(403);
+      console.log('User reached link limit');
+      return;
+    }
+  }
+
   // Generate a `linkId`
   // Add the new link to the database (wrap this in try/catch)
   try {
