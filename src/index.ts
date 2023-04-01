@@ -38,7 +38,7 @@ app.use(
 app.use(express.json());
 
 app.post('api/newLink', shortenUrl);
-app.get('api/link/:link', getOriginalUrl);
+app.get('api/:linkId/link', getOriginalUrl);
 app.get('api/:username/getAllLinks', getAllUsersLinks);
 app.delete('api/:linkId/deleteLink', deleteLink);
 
