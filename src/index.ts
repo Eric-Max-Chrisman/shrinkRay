@@ -12,7 +12,12 @@ import {
   getUserByUsername,
 } from './controllers/UserController';
 
-import { shortenUrl, getOriginalUrl, getAllUsersLinks } from './controllers/LinkController';
+import {
+  shortenUrl,
+  getOriginalUrl,
+  getAllUsersLinks,
+  deleteLink,
+} from './controllers/LinkController';
 
 const app: Express = express();
 const { PORT, COOKIE_SECRET } = process.env;
@@ -35,6 +40,7 @@ app.use(express.json());
 app.post('api/newLink', shortenUrl);
 app.get('api/link/:link', getOriginalUrl);
 app.get('api/:username/getAllLinks', getAllUsersLinks);
+app.delete('api/:linkId/deleteLink', deleteLink);
 
 app.post('/api/users', registerUser); // Create an account
 app.post('/api/login', logIn); // Log in to an account

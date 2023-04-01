@@ -10,6 +10,7 @@ import {
   getLinkByLinkId,
   getLinksByUserId,
   getLinksByUserIdForOwnAccount,
+  deleteLinkWithId,
 } from '../models/linkModel';
 import { parseDatabaseError } from '../utils/db-utils';
 
@@ -86,20 +87,27 @@ async function getOriginalUrl(req: Request, res: Response): Promise<void> {
 }
 
 async function getAllUsersLinks(req: Request, res: Response): Promise<void> {
+  // set up variables
   const username = req.params as UserUserNameParam;
   const refUser: User = await getUserWithUsername(username.targetUserUserName);
+
+  // see if user exist
   if (!refUser) {
     res.sendStatus(404);
     return;
   }
 
+  // session managment
   const { isLoggedIn, authenticatedUser } = req.session;
 
+  // if admin or logged in as the user get on info
   if (authenticatedUser.isAdmin || (isLoggedIn && authenticatedUser.userId === refUser.userId)) {
     // get everything
     const links: Link[] = await getLinksByUserIdForOwnAccount(refUser.userId);
     console.log(res.json(links));
-  } else {
+  }
+  // if not, get some info
+  else {
     // get all links and some user info
     const links: Link[] = await getLinksByUserId(refUser.userId);
     console.log(res.json(links));
@@ -107,4 +115,31 @@ async function getAllUsersLinks(req: Request, res: Response): Promise<void> {
 
   res.sendStatus(201);
 }
-export { shortenUrl, getOriginalUrl, getAllUsersLinks };
+
+async function deleteLink(req: Request, res: Response): Promise<void> {
+  // set up variables
+  const linkId = req.params as LinkParam;
+  const link = await getLinkByLinkId(linkId.link);
+
+  // check to see if link exist
+  if (!link) {
+    res.sendStatus(404);
+    return;
+  }
+
+  // session managment
+  const { isLoggedIn, authenticatedUser } = req.session;
+
+  // if admin or logged in as owner of link, delete
+  if (authenticatedUser.isAdmin || (isLoggedIn && authenticatedUser.userId === link.user.userId)) {
+    deleteLinkWithId(linkId.link);
+  }
+  // else, error
+  else {
+    res.sendStatus(403);
+    return;
+  }
+
+  res.sendStatus(201);
+}
+export { shortenUrl, getOriginalUrl, getAllUsersLinks, deleteLink };
